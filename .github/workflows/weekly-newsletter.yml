@@ -37,3 +37,11 @@ jobs:
         env:
           SUBSTACK_API_KEY: ${{ secrets.SUBSTACK_API_KEY }}
         run: python scripts/publish_substack.py
+
+      - name: Commit data and newsletter
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data newsletters || echo "nothing to add"
+          git commit -m "Add scraped data and newsletter" || echo "no changes"
+          git push
