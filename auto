@@ -1,0 +1,39 @@
+name: Weekly FDA Newsletter Automation
+
+on:
+  schedule:
+    # 매주 토요일 오전 9시 (KST)
+    - cron: '0 0 * * 6'
+  workflow_dispatch:
+
+jobs:
+  newsletter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Crawl FDA data
+        run: python scripts/crawl_fda.py
+
+      - name: Analyze data
+        run: python scripts/analyze_data.py
+
+      - name: Generate newsletter
+        run: python scripts/generate_newsletter.py
+
+      - name: Publish to Substack
+        env:
+          SUBSTACK_API_KEY: ${{ secrets.SUBSTACK_API_KEY }}
+        run: python scripts/publish_substack.py
