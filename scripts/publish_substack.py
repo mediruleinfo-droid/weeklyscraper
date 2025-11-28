@@ -1,2 +1,2 @@
 if __name__ == "__main__":
-    print("TODO: Substack 연동은 나중에 구현 예정")
+    print("TODO: Beehiv API로 뉴스레터 발행 기능 추가 예정")
