@@ -20,26 +20,25 @@ def get_search_result_html(start_date: str, end_date: str) -> str:
     session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
 
     # 검색 조건: Decision Date, 정렬은 Decision Date descending, page size 500
-    data = {
-        "Panel": "",
-        "ProductCode": "",
-        "KNumber": "",
-        "Applicant": "",
-        "DeviceName": "",
-        "DecisionFrom": start_date,
-        "DecisionTo": end_date,
-        "sortcolumn": "DecisionDate",
-        "sortdirection": "DESC",
-        "Pagesize": "500",
-        "StartRec": "1",
-        "Search": "Search",  # 실제 폼에서 search 버튼 이름과 같도록
-    }
+data = {
+    "KNumber": "",
+    "Panel": "",
+    "ProductCode": "",
+    "Applicant": "",
+    "DeviceName": "",
+    "DecisionDateFrom": start_date,  # "11/16/2025"
+    "DecisionDateTo": end_date,      # "11/22/2025"
+    "sortcolumn": "DecisionDate",
+    "sortdirection": "DESC",
+    "Pagesize": "500",
+    "StartRec": "1",
+    "Search": "Search",
+}
 
     print(f"[INFO] Requesting search HTML {start_date} ~ {end_date}")
     res = session.post(SEARCH_URL, data=data, timeout=60)
     res.raise_for_status()
     return res.text, session
-
 
 def get_export_csv(session: requests.Session, html: str) -> pd.DataFrame:
     """
