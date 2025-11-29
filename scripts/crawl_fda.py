@@ -88,23 +88,39 @@ def get_rpp500_page(session: requests.Session, url: str):
 
 def download_export_csv(session: requests.Session, html: str, base_url: str) -> pd.DataFrame:
     """
-    결과 페이지 HTML에서 title='Export to Excel' 링크를 찾아 CSV를 내려받아 DataFrame 으로 반환한다.
+    결과 페이지 HTML에서 form name='subpmnform' (id='pmnform') 을 찾아
+    그 action(pmnExcel.cfm) 으로 POST 하여 CSV를 받아온다.
     """
     soup = BeautifulSoup(html, "html.parser")
-    link = soup.find("a", {"title": "Export to Excel"})
-    if link is None:
-        raise RuntimeError("Cannot find 'Export to Excel' link on the page.")
 
-    href = link.get("href")
-    if not href:
-        raise RuntimeError("Export to Excel link has no href.")
+    # subpmnform / id=pmnform 폼 찾기
+    form = (
+        soup.find("form", {"name": "subpmnform"})
+        or soup.find("form", {"id": "pmnform"})
+    )
+    if form is None:
+        raise RuntimeError("Cannot find subpmnform/pnmform on the page.")
 
-    export_url = urljoin(base_url, href)
-    print(f"[INFO] Downloading CSV from: {export_url}")
-    res = session.get(export_url, timeout=60)
+    action = form.get("action")
+    if not action:
+        raise RuntimeError("Export form has no action attribute.")
+
+    export_url = urljoin(base_url, action)  # pmnExcel.cfm 절대 URL
+
+    # hidden input 등 모든 필드 수집 (특히 ID=K250927,... 리스트)
+    payload = {}
+    for inp in form.find_all("input"):
+        name = inp.get("name")
+        if not name:
+            continue
+        value = inp.get("value", "")
+        payload[name] = value
+
+    print(f"[INFO] Posting to export form: {export_url}")
+    res = session.post(export_url, data=payload, timeout=60)
     res.raise_for_status()
 
-    # 응답은 CSV 텍스트라고 가정 (직접 받은 PMNExcelReport-*.csv 와 동일 포맷)
+    # 응답은 CSV 텍스트 (PMNExcelReport-*.csv와 동일 포맷)
     df = pd.read_csv(io.StringIO(res.text))
     print(f"[INFO] Export CSV rows: {len(df)}")
     return df
